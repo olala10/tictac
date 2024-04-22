@@ -10,7 +10,7 @@ COPY package*.json ./
 #Install all the dependencies
 RUN npm install
 
-#Copy the rest of the application code into the container at /app
+#9Copy the rest of the application code into the container at /app
 COPY . .
 
 #Set the PORT environment variable to 8080
