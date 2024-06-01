@@ -1,6 +1,14 @@
 const { createServer } = require("http");
 const { Server } = require("socket.io");
 
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const { authenticate } = require('./cognitoService');
+
+
+
 const httpServer = createServer();
 const io = new Server(httpServer, {
   // cors: "http://3.85.108.152:5173/",
@@ -83,4 +91,38 @@ io.on("connection", (socket) => {
   });
 });
 
-httpServer.listen(3000);
+
+////////////////////////////////////////////////////////////////
+const app = express();
+app.use(bodyParser.json());
+app.use(cors());
+
+const protectedRoute = (req, res, next) => {
+  const token = req.headers.authorization;
+  if (!token) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  // Token verification logic here
+  next();
+};
+
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const response = await authenticate(username, password);
+    res.json(response.AuthenticationResult);
+  } catch (err) {
+    res.status(401).json({ message: 'Authentication failed' });
+  }
+});
+
+app.get('/protected', protectedRoute, (req, res) => {
+  res.json({ message: 'This is a protected route' });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+httpServer.listen(PORT);
+
+// httpServer.listen(3000);
